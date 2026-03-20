@@ -4,7 +4,6 @@ from sqlalchemy.orm import sessionmaker, Session, declarative_base, relationship
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import Column, Integer, String, Numeric, Text, ForeignKey, Float, Enum
 import enum
 import json
 import os
@@ -32,6 +31,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class UserRole(enum.Enum):
+    ADMIN = "admin"
+    MANAGER = "manager"
+    TECHNICIAN = "technician"
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    role = Column(String, default="manager")
+
 class Category(Base):
     __tablename__ = "categories"
     id = Column(Integer, primary_key=True, index=True)
@@ -51,6 +62,7 @@ class Service(Base):
     price_per_unit = Column(Float)
     unit_name = Column(String)
     image = Column(String, default="default.jpg")
+    difficulty_factor = Column(Float, default=1.0)
     category_id = Column(Integer, ForeignKey("categories.id"))
     brand_id = Column(Integer, ForeignKey("brands.id"))
     
@@ -121,6 +133,7 @@ def get_services(db: Session = Depends(get_db)):
             "price": float(s.price_per_unit),
             "unit": s.unit_name,
             "image": s.image,
+            "difficulty_factor": s.difficulty_factor,
             "category_id": s.category_id,
             "category_name": s.category.name if s.category else "Общее",
             "brand": s.brand.name if s.brand else "Без бренда",
@@ -150,40 +163,11 @@ def delete_order(o_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "deleted"}
 
-class UserRole(enum.Enum):
-    ADMIN = "admin"
-    MANAGER = "manager"
-    TECHNICIAN = "technician"
-
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    role = Column(String, default="manager") 
-
-class Service(Base):
-    __tablename__ = "services"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
-    price_per_unit = Column(Float)
-    unit_name = Column(String)
-    image = Column(String, default="default.jpg")
-    difficulty_factor = Column(Float, default=1.0) 
-    category_id = Column(Integer, ForeignKey("categories.id"))
-    brand_id = Column(Integer, ForeignKey("brands.id"))
-    
-    category = relationship("Category", back_populates="services")
-    brand = relationship("Brand", back_populates="services")
-    specs = relationship("ServiceSpec", back_populates="service", cascade="all, delete-orphan")
-
-    @app.post("/api/login")
-    def login(data: dict = Body(...), db: Session = Depends(get_db)):
+@app.post("/api/login")
+def login(data: dict = Body(...), db: Session = Depends(get_db)):
     username = data.get("username")
     password = data.get("password")
-    
     user = db.query(User).filter(User.username == username).first()
-    
     if user and user.hashed_password == password:
         return {
             "status": "success", 
@@ -192,5 +176,4 @@ class Service(Base):
                 "role": user.role
             }
         }
-    
     return {"status": "error", "message": "Неверный логин или пароль"}
