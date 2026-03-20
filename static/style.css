@@ -1,0 +1,144 @@
+:root {
+    --green: #2ecc71;
+    --dark: #1a202c;
+    --light: #f7fafc;
+    --border: #edf2f7;
+}
+
+body {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--light);
+    color: var(--dark);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    background: white;
+    border-bottom: 1px solid var(--border);
+}
+
+.logo {
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+}
+
+.btn-fast-call {
+    background: var(--green);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+.hero {
+    text-align: center;
+    padding: 40px 0;
+}
+
+.hero h1 {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.quiz-container {
+    background: white;
+    border-radius: 24px;
+    padding: 50px 40px 40px;
+    max-width: 700px;
+    margin: 0 auto 60px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.quiz-progress {
+    height: 6px;
+    background: var(--green);
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: 0.5s ease;
+}
+
+.quiz-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.quiz-btn {
+    padding: 18px;
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    background: white;
+    cursor: pointer;
+    transition: 0.2s;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--dark);
+    text-align: center;
+}
+
+.quiz-btn:hover {
+    border-color: var(--green);
+    background: #f0fff4;
+    transform: translateY(-2px);
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    font-size: 16px;
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+.btn-submit {
+    width: 100%;
+    background: var(--green);
+    color: white;
+    padding: 16px;
+    border-radius: 12px;
+    border: none;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-submit:hover {
+    filter: brightness(1.1);
+}
+
+footer {
+    background: white;
+    padding: 40px 0;
+    border-top: 1px solid var(--border);
+}
+
+.footer-grid {
+    display: flex;
+    justify-content: space-between;
+}
+
+.footer-col h4 {
+    margin-bottom: 15px;
+    font-size: 16px;
+}

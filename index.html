@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ООО Армстрим — Системы безопасности</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<style>
+    :root { 
+        --green: #2ecc71; 
+        --dark: #2c3e50; 
+        --light: #f8fafc; 
+        --footer-bg: #1a252f; 
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes pulse-green {
+        0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+    }
+
+    body { 
+        font-family: 'Inter', 'Segoe UI', sans-serif; 
+        margin: 0; 
+        background: var(--light); 
+        color: var(--dark); 
+        display: flex; 
+        flex-direction: column; 
+        min-height: 100vh; 
+    }
+
+    .header-top { 
+        background: var(--dark); 
+        color: white; 
+        padding: 15px 50px; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        position: sticky; 
+        top: 0; 
+        z-index: 1000; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+    }
+
+    .logo { 
+        font-size: 24px; 
+        font-weight: 800; 
+        letter-spacing: 1px; 
+    }
+
+    .btn-fast-call { 
+        background: var(--green); 
+        color: white; 
+        border: 2px solid var(--green); 
+        padding: 12px 24px; 
+        border-radius: 8px; 
+        cursor: pointer; 
+        font-weight: 600; 
+        transition: 0.3s; 
+        text-decoration: none; 
+        animation: pulse-green 2s infinite;
+    }
+
+    .btn-fast-call:hover { 
+        background: transparent; 
+        color: var(--green); 
+        transform: scale(1.05);
+        animation: none;
+    }
+
+    .hero { 
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%); 
+        color: white; 
+        padding: 120px 20px 160px; 
+        text-align: center; 
+    }
+
+    .hero h1 { 
+        font-size: 48px; 
+        margin: 0 0 15px; 
+        font-weight: 800; 
+        animation: fadeInUp 0.8s ease-out forwards;
+    }
+
+    .hero p {
+        font-size: 18px;
+        opacity: 0;
+        animation: fadeInUp 0.8s ease-out 0.3s forwards;
+    }
+
+    .container { 
+        max-width: 1200px; 
+        margin: 0 auto; 
+        padding: 0 20px; 
+    }
+
+    .categories-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+        gap: 25px; 
+        margin: -80px auto 80px; 
+        position: relative;
+        z-index: 10;
+    }
+
+    .category-card { 
+        background: white; 
+        padding: 40px 25px; 
+        border-radius: 24px; 
+        text-align: center; 
+        text-decoration: none; 
+        color: inherit; 
+        box-shadow: 0 15px 35px rgba(0,0,0,0.07); 
+        border: 1px solid rgba(0,0,0,0.05); 
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: 0;
+        animation: fadeInUp 0.6s ease-out forwards;
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    .category-card:nth-child(1) { animation-delay: 0.1s; }
+    .category-card:nth-child(2) { animation-delay: 0.2s; }
+    .category-card:nth-child(3) { animation-delay: 0.3s; }
+    .category-card:nth-child(4) { animation-delay: 0.4s; }
+
+    .category-card:hover { 
+        transform: translateY(-12px) !important; 
+        border-color: var(--green); 
+        box-shadow: 0 20px 40px rgba(46, 204, 113, 0.15);
+    }
+
+    .category-card .icon { 
+        font-size: 50px; 
+        margin-bottom: 20px; 
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        backdrop-filter: blur(8px);
+    }
+
+    .modal-content {
+        background: white;
+        padding: 40px;
+        border-radius: 28px;
+        position: relative;
+        width: 90%;
+        max-width: 400px;
+    }
+
+    .fade-enter-active, .fade-leave-active {
+        transition: opacity 0.3s ease;
+    }
+    .fade-enter-active .modal-content {
+        animation: fadeInUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .fade-leave-active .modal-content {
+        transition: transform 0.3s ease;
+        transform: translateY(30px);
+    }
+    .fade-enter-from, .fade-leave-to {
+        opacity: 0;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 20px; right: 20px;
+        font-size: 30px;
+        cursor: pointer;
+        color: #94a3b8;
+        transition: 0.3s;
+    }
+
+    footer { 
+        background: var(--footer-bg); 
+        color: white; 
+        padding: 60px 0; 
+        margin-top: auto; 
+        border-top: 3px solid var(--green);
+    }
+
+    .footer-grid {
+        display: flex;
+        justify-content: space-between;
+        gap: 40px;
+    }
+
+    .contact-item {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        margin-bottom: 10px;
+        transition: 0.3s;
+    }
+
+    .contact-item:hover {
+        color: var(--green);
+        transform: translateX(-5px);
+    }
+
+    .btn-submit { 
+        background: var(--green); 
+        color: white; 
+        border: none; 
+        padding: 16px; 
+        width: 100%; 
+        border-radius: 12px; 
+        font-weight: 700; 
+        cursor: pointer; 
+        transition: 0.3s;
+    }
+
+    input[type="text"] { 
+        padding: 15px; 
+        border: 2px solid #f1f5f9; 
+        border-radius: 12px; 
+        width: 100%; 
+        box-sizing: border-box; 
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+    <div id="app">
+        <header class="header-top">
+            <div class="logo">АРМ<span style="color:var(--green)">СТРИМ</span></div>
+            <button class="btn-fast-call" @click="showFastModal = true">ЗАКАЗАТЬ ЗВОНОК</button>
+        </header>
+
+        <section class="hero">
+            <div class="container">
+                <h1>Безопасность вашего бизнеса под ключ</h1>
+                <p>Выберите категорию, чтобы рассчитать стоимость системы онлайн</p>
+            </div>
+        </section>
+
+        <div class="container">
+            <div class="categories-grid">
+                <a href="/video" class="category-card">
+                    <span class="icon">👁️</span>
+                    <h3>Видеонаблюдение</h3>
+                    <p>IP-системы с доступом со смартфона.</p>
+                </a>
+                <a href="/fire" class="category-card">
+                    <span class="icon">🔥</span>
+                    <h3>Пожарная система</h3>
+                    <p>Проектирование и монтаж по нормам МЧС.</p>
+                </a>
+                <a href="/guard" class="category-card">
+                    <span class="icon">🛡️</span>
+                    <h3>Охранная система</h3>
+                    <p>Защита периметра и пультовая охрана.</p>
+                </a>
+                <a href="/tex" class="category-card">
+                    <span class="icon">🛠️</span>
+                    <h3>Техническое обслуживание</h3>
+                    <p>Плановый сервис и ремонт систем 24/7.</p>
+                </a>
+            </div>
+        </div>
+
+        <transition name="fade">
+            <div class="modal-overlay" v-if="showFastModal" @mousedown.self="showFastModal = false">
+                <div class="modal-content">
+                    <span class="close-btn" @click="showFastModal = false">&times;</span>
+                    <div style="text-align:center">
+                        <h3>Обратный звонок</h3>
+                        <p>Оставьте номер, и мы перезвоним в течение 5 минут</p>
+                        <input type="text" v-model="phone" placeholder="+375 (__) ___-__-__">
+                        <button class="btn-submit" @click="sendFastOrder">ЖДУ ЗВОНКА</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+
+<footer>
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-col left">
+                <h4>АРМ<span style="color:var(--green)">СТРИМ</span></h4>
+                <p>Проектирование, монтаж и техническое обслуживание систем безопасности в Минске и по всей Беларуси. Работаем с 2018 года на основании лицензии МЧС №1/23456.</p>
+                <div style="margin-top: 20px; font-size: 13px; opacity: 0.6;">
+                    ООО «Армстрим» <br>
+                    УНП 193000000
+                </div>
+            </div>
+
+            <div class="footer-col center">
+                <h4>УСЛУГИ</h4>
+                <ul style="list-style: none; padding: 0; margin: 0; font-size: 13px; line-height: 2.2; color: white; opacity: 0.8; font-weight: 600; letter-spacing: 0.5px;">
+                    <li>ВИДЕОНАБЛЮДЕНИЕ</li>
+                    <li>ПОЖАРНАЯ АВТОМАТИКА</li>
+                    <li>КОНТРОЛЬ ДОСТУПА (СКУД)</li>
+                    <li>ОБСЛУЖИВАНИЕ И РЕМОНТ</li>
+                </ul>
+            </div>
+
+            <div class="footer-col right">
+                <h4>КОНТАКТЫ</h4>
+                <div class="contact-item">
+                    +375 (29) 123-45-67 <span class="contact-icon">📞</span>
+                </div>
+                <div class="contact-item">
+                    +375 (17) 321-43-21 <span class="contact-icon">☎️</span>
+                </div>
+                <div class="contact-item">
+                    info@armstream.by <span class="contact-icon">✉️</span>
+                </div>
+                <div class="contact-item">
+                    г. Минск, пр-т Победителей 103 <span class="contact-icon">📍</span>
+                </div>
+                <div class="contact-item" style="font-size: 13px; opacity: 0.7; margin-top: 10px;">
+                    Пн-Пт: 09:00 — 18:00
+                </div>
+            </div>
+        </div>
+        
+        <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 40px; padding-top: 20px; text-align: center; font-size: 12px; opacity: 0.5;">
+            © 2026 ООО «Армстрим». Все права защищены. Разработка систем безопасности в соответствии со стандартами РБ.
+        </div>
+    </div>
+</footer>
+
+<style>
+    .footer-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1.5fr;
+        gap: 50px;
+    }
+
+    .footer-col h4 {
+        color: var(--green);
+        font-size: 18px;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .footer-col p {
+        line-height: 1.6;
+        font-size: 14px;
+        opacity: 0.8;
+    }
+
+    .contact-item {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        margin-bottom: 12px;
+        font-size: 15px;
+        color: white;
+        opacity: 0.9;
+    }
+
+    .contact-icon {
+        margin-left: 10px;
+        width: 20px;
+        text-align: center;
+        color: var(--green);
+    }
+
+    @media (max-width: 992px) {
+        .footer-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .footer-grid {
+            grid-template-columns: 1fr;
+            text-align: center;
+        }
+        .contact-item {
+            justify-content: center;
+        }
+    }
+</style>
+
+</div>
+
+    <script>
+        const { createApp, ref } = Vue
+        createApp({
+            setup() {
+                const showFastModal = ref(false);
+                const phone = ref("");
+                const sendFastOrder = () => {
+                    if (!phone.value) return alert("Введите номер");
+                    alert("Заявка принята!");
+                    showFastModal.value = false;
+                };
+                return { showFastModal, phone, sendFastOrder }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

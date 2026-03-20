@@ -1,0 +1,33 @@
+.fade-step-enter-active,
+.fade-step-leave-active {
+    transition: all 0.4s ease;
+}
+
+.fade-step-enter-from {
+    opacity: 0;
+    transform: translateX(30px);
+}
+
+.fade-step-leave-to {
+    opacity: 0;
+    transform: translateX(-30px);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.receipt {
+    animation: slideUp 0.5s ease-out;
+}
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+    opacity: 0;
+}

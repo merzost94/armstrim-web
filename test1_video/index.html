@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конфигуратор Армстрим</title>
+    <link rel="stylesheet" href="/v_video/style.css">
+    <link rel="stylesheet" href="/v_video/animations.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    <div id="app">
+        <div class="toast-container">
+            <transition-group name="toast">
+                <div v-for="msg in notifications" :key="msg.id" class="toast-item">
+                     {{ msg.text }}
+                </div>
+            </transition-group>
+        </div>
+
+        <transition name="fade">
+            <div v-if="previewItem" class="modal-overlay" @click.self="previewItem = null">
+                <div class="modal-content">
+                    <button class="modal-close" @click="previewItem = null">×</button>
+                    <img :src="previewItem.image || '/v_video/no-image.jpg'" :alt="previewItem.name" class="preview-img">
+                    <div class="preview-details">
+                        <div class="card-badge" style="display:inline-block; margin-bottom:10px;">{{ previewItem.brand }}</div>
+                        <h3 style="margin-top:0;">{{ previewItem.name }}</h3>
+                        <div style="font-size: 20px; color: #28a745; font-weight: bold; margin-bottom: 20px;">
+                            {{ previewItem.price }} BYN
+                        </div>
+                        <button class="btn-add" style="width:100%" @click="addToCart(previewItem); previewItem = null">ДОБАВИТЬ В ЧЕК</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <header class="header">
+            <a href="/" class="home-btn">← На главную</a>
+            <h1>Конфигуратор системы</h1>
+            <div class="steps-indicator">
+                <span :class="{active: currentStep === 1}">1. Камеры</span>
+                <span :class="{active: currentStep === 2}">2. Хранение</span>
+                <span :class="{active: currentStep === 3}">3. Монтаж</span>
+                <span :class="{active: currentStep === 4}">Итог</span>
+            </div>
+        </header>
+
+        <div class="container">
+            <transition name="fade-step" mode="out-in">
+                <div :key="currentStep">
+                    <div v-if="currentStep < 4">
+                        <div class="step-header">
+                            <h2>{{ stepTitle }}</h2>
+                            <div class="nav-controls">
+                                <button v-if="currentStep > 1" class="btn-back-step" @click="prevStep" style="margin-right: 10px; padding: 12px 20px; border-radius: 8px; cursor: pointer; border: 1px solid #ddd; background: transparent;">← Назад</button>
+                                <button class="btn-next" @click="nextStep">Далее →</button>
+                            </div>
+                        </div>
+
+                        <div v-if="currentStep === 3">
+                            <div style="background: white; padding: 30px; border-radius: 12px; border: 2px solid #28a745; margin-bottom: 25px; text-align: center;">
+                                <div style="font-size: 50px; margin-bottom: 15px;">🛠️</div>
+                                <h3 style="margin: 0 0 10px 0; color: #1a1a1a;">Услуги рассчитаны автоматически</h3>
+                                
+                                <div style="display: inline-flex; flex-direction: column; align-items: flex-start; background: #f8fafc; padding: 20px; border-radius: 10px; width: 100%; max-width: 400px; text-align: left; border: 1px solid #e2e8f0; margin-top: 15px;">
+                                    <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px;">
+                                        <span>Монтаж камер ({{ camerasCount }} шт.):</span>
+                                        <b style="color: #28a745;">{{ mountPriceTotal.toFixed(2) }} BYN</b>
+                                    </div>
+                                    
+                                    <div v-if="dvrCount > 0" style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px;">
+                                        <span>Настройка видеорегистратора:</span>
+                                        <b style="color: #28a745;">{{ dvrWorkPriceTotal.toFixed(2) }} BYN</b>
+                                    </div>
+
+                                    <div v-if="smartCable > 0" style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 10px;">
+                                        <span>Прокладка кабеля ({{ smartCable }} м.):</span>
+                                        <b style="color: #28a745;">{{ (smartCable * 2.5).toFixed(2) }} BYN</b>
+                                    </div>
+                                    <div style="font-size: 12px; color: #94a3b8; border-top: 1px solid #eee; padding-top: 10px; width: 100%;">* Включает юстировку и пусконаладку оборудования.</div>
+                                </div>
+                            </div>
+
+                            <div style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                                <h3 style="margin-top: 0; font-size: 16px;">Дополнительные материалы</h3>
+                                <div style="display: flex; gap: 15px; align-items: flex-end;">
+                                    <div style="flex: 1;">
+                                        <label style="display: block; font-size: 13px; margin-bottom: 5px; color: #64748b;">Примерный метраж кабеля (м):</label>
+                                        <input type="number" v-model.number="smartCable" min="0" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box;">
+                                    </div>
+                                    <button @click="applySmartCable" style="background: #333; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold;">Применить</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-if="loading" style="text-align: center; padding: 50px;">Загрузка...</div>
+                        <div v-else-if="currentStep < 3" class="services-grid">
+                            <div v-for="item in stepServices" :key="item.id" class="service-card" style="position: relative;">
+                                <div class="card-badge">{{ item.brand }}</div>
+                                <div class="preview-trigger" title="Предпросмотр" @click="previewItem = item">🔍</div>
+                                
+                                <h3 style="padding-right: 30px;">{{ item.name }}</h3>
+                                <div class="price-row">
+                                    <div class="price">{{ item.price }} BYN</div>
+                                    <div class="quantity-controls">
+                                        <input type="number" v-model.number="item.tempQty" min="1" class="qty-input">
+                                        <button class="btn-add" @click="addToCart(item)">В ЧЕК</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-else class="receipt-container">
+                        <div class="receipt">
+                            <div class="receipt-header">
+                                <h2>Ваша смета</h2>
+                                <button @click="prevStep" style="padding: 5px 15px; cursor: pointer; border-radius: 5px; border: 1px solid #ddd; background: #fff;">← Назад</button>
+                            </div>
+                            <div class="receipt-body">
+                                <div v-for="(cItem, index) in cart" :key="index" class="receipt-row">
+                                    <div class="r-info">
+                                        <div class="r-name">{{ cItem.name }}</div>
+                                        <div class="r-qty">{{ cItem.qty }} x {{ cItem.price }} BYN</div>
+                                    </div>
+                                    <div class="r-total-item">
+                                        <span>{{ (cItem.price * cItem.qty).toFixed(2) }}</span>
+                                        <button @click="removeFromCart(index)" style="background:none; border:none; color:red; cursor:pointer;">×</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="total-row">
+                                <span>ИТОГО:</span>
+                                <span>{{ totalSum.toFixed(2) }} BYN</span>
+                            </div>
+
+                            <div class="order-form" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #ddd;">
+                                <input type="text" v-model="clientName" placeholder="Ваше имя" 
+                                       style="width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 10px; font-size: 16px; box-sizing: border-box;">
+                                
+                                <input type="text" 
+                                       v-model="clientPhone" 
+                                       @focus="handlePhoneFocus"
+                                       placeholder="Ваш номер телефона" 
+                                       style="width: 100%; padding: 14px; border: 2px solid #e2e8f0; border-radius: 10px; margin-bottom: 15px; font-size: 16px; box-sizing: border-box;">
+                                
+                                <button class="btn-send" v-if="cart.length > 0" @click="handleOrder" :disabled="sending">
+                                    {{ sending ? 'ОТПРАВЛЯЕМ...' : 'ОФОРМИТЬ ЗАКАЗ' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+        </div>
+    </div>
+    <script src="/v_video/configurator.js"></script>
+</body>
+</html>
