@@ -2,82 +2,113 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Панель управления - Армстрим</title>
+    <title>ARMSTRIM | Панель управления</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <link rel="stylesheet" href="../static/style.css">
-    <style>
-        .admin-container { padding: 20px; max-width: 1200px; margin: 0 auto; font-family: sans-serif; }
-        .login-box { max-width: 400px; margin: 100px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
-        .login-box input { display: block; width: 100%; margin-bottom: 10px; padding: 8px; }
-        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .nav-tabs button { cursor: pointer; padding: 10px; border: none; background: #f0f0f0; }
-        .nav-tabs button.active { background: #007bff; color: white; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background: #f4f4f4; }
-        .btn-edit { background: #ffc107; border: none; padding: 5px 10px; cursor: pointer; }
-        .btn-delete { background: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer; }
-        .order-card { border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; border-radius: 5px; background: #f9f9f9; }
-    </style>
+    <link rel="stylesheet" href="/static/admin_style.css">
 </head>
 <body>
-<div id="app" class="admin-container">
-    <div v-if="!isLoggedIn" class="login-box">
-        <h2>Вход в админ-панель</h2>
-        <input v-model="loginForm.username" type="text" placeholder="Логин (admin)">
-        <input v-model="loginForm.password" type="password" placeholder="Пароль (123)">
-        <button @click="handleLogin" style="width: 100%; padding: 10px; background: #28a745; color: white; border: none;">Войти</button>
-        <p v-if="error" style="color: red; margin-top: 10px;">{{ error }}</p>
+<div id="app">
+    <div v-if="!isLoggedIn" style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+        <div class="card" style="width: 400px; text-align: center;">
+            <h2 style="margin-bottom: 25px;">Вход в систему</h2>
+            <input v-model="loginForm.username" placeholder="Логин" style="width: 100%; margin-bottom: 15px; box-sizing: border-box;">
+            <input v-model="loginForm.password" type="password" placeholder="Пароль" style="width: 100%; margin-bottom: 25px; box-sizing: border-box;">
+            <button @click="handleLogin" class="btn-export" style="width: 100%; margin-bottom: 0;">Войти</button>
+        </div>
     </div>
 
     <div v-else>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h1>Система управления: {{ user.username }} ({{ user.role }})</h1>
-            <button @click="logout" style="padding: 5px 15px;">Выход</button>
+        <div class="sidebar">
+            <h3>ARMSTRIM</h3>
+            <div style="margin-bottom: 30px; font-size: 14px;">
+                <span style="color: #a0aec0;">Роль:</span> 
+                <b style="color: var(--green);">{{ user.role }}</b>
+            </div>
+            <div class="nav-item" :class="{active: currentTab === 'services'}" @click="currentTab = 'services'">Прейскурант</div>
+            <div class="nav-item" :class="{active: currentTab === 'orders'}" @click="currentTab = 'orders'">Заказы</div>
+            <div v-if="user.role === 'admin'" class="nav-item" :class="{active: currentTab === 'stats'}" @click="currentTab = 'stats'">Аналитика</div>
+            
+            <div @click="logout" style="margin-top: 60px; padding: 10px; cursor: pointer; color: #e53e3e; font-weight: 700;">Выйти</div>
         </div>
 
-        <div class="nav-tabs">
-            <button :class="{active: currentTab === 'services'}" @click="currentTab = 'services'">Прейскурант</button>
-            <button :class="{active: currentTab === 'orders'}" @click="currentTab = 'orders'">Заказы</button>
-        </div>
-
-        <div v-if="currentTab === 'services'">
-            <h3>Управление товарами и коэффициентами</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Название</th>
-                        <th>Цена (BYN)</th>
-                        <th>Коэф. сложности</th>
-                        <th>Категория</th>
-                        <th>Действия</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="s in services" :key="s.id">
-                        <td>{{ s.id }}</td>
-                        <td>{{ s.name }}</td>
-                        <td><input type="number" v-model="s.price" step="0.1" style="width: 80px;"></td>
-                        <td><input type="number" v-model="s.difficulty_factor" step="0.1" style="width: 50px;"></td>
-                        <td>{{ s.category_name }}</td>
-                        <td>
-                            <button class="btn-edit" @click="updateService(s)">Сохранить</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div v-if="currentTab === 'orders'">
-            <h3>Входящие запросы</h3>
-            <div v-for="o in orders" :key="o.id" class="order-card">
-                <div style="display: flex; justify-content: space-between;">
-                    <strong>Заказ №{{ o.id }} - {{ o.client_phone }}</strong>
-                    <button class="btn-delete" @click="deleteOrder(o.id)">Удалить</button>
+        <div class="main-content">
+            <div v-if="currentTab === 'services'" class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                    <h2 style="margin: 0;">Редактирование прайса</h2>
+                    <input v-model="searchQuery" placeholder="Поиск по названию..." style="width: 300px;">
                 </div>
-                <p><strong>Сумма:</strong> {{ o.total_price }} BYN</p>
-                <p><strong>Детали:</strong> {{ o.details }}</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th @click="sortBy('id')">ID</th>
+                            <th @click="sortBy('name')">Название</th>
+                            <th @click="sortBy('price')">Цена (BYN)</th>
+                            <th>Коэф.</th>
+                            <th v-if="user.role === 'admin'"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="s in filteredServices" :key="s.id">
+                            <td>{{ s.id }}</td>
+                            <td>
+                                <input v-if="user.role === 'admin'" v-model="s.name" style="width: 90%;">
+                                <span v-else>{{ s.name }}</span>
+                            </td>
+                            <td>
+                                <input v-if="user.role === 'admin'" type="number" v-model="s.price" style="width: 80px;">
+                                <span v-else>{{ s.price }}</span>
+                            </td>
+                            <td>
+                                <input v-if="user.role === 'admin'" type="number" v-model="s.difficulty_factor" style="width: 60px;">
+                                <span v-else>{{ s.difficulty_factor }}</span>
+                            </td>
+                            <td v-if="user.role === 'admin'">
+                                <button @click="updateService(s)" class="btn-save">Ок</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div v-if="currentTab === 'orders'" class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <h2 style="margin: 0;">Запросы с сайта</h2>
+                    <button @click="exportData" class="btn-export">📥 Скачать Excel (.xlsx)</button>
+                </div>
+                
+                <div v-if="orders.length === 0" style="text-align: center; color: #a0aec0; padding: 40px;">
+                    Заказов пока нет
+                </div>
+
+                <div v-for="o in orders" :key="o.id" style="padding: 25px; border: 2px solid var(--border); border-radius: 16px; margin-bottom: 20px; background: #fff;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <div>
+                            <span style="color: #a0aec0; font-size: 12px; display: block; margin-bottom: 4px;">КЛИЕНТ #{{ o.id }}</span>
+                            <span style="font-size: 20px; font-weight: 800; color: var(--dark);">{{ o.client_phone }}</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="color: #a0aec0; font-size: 12px; display: block; margin-bottom: 4px;">ИТОГО</span>
+                            <span style="color: var(--green); font-size: 20px; font-weight: 800;">{{ formatPrice(o.total_price) }} BYN</span>
+                        </div>
+                    </div>
+                    <div style="background: var(--light); padding: 15px; border-radius: 10px; border-left: 4px solid var(--green);">
+                        <strong style="font-size: 13px; color: var(--dark); display: block; margin-bottom: 5px;">ДЕТАЛИ ЗАКАЗА:</strong>
+                        <p style="margin: 0; font-size: 15px; color: #4a5568; white-space: pre-wrap;">{{ o.details || 'Информации о выбранных услугах нет' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="currentTab === 'stats'">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="stat-box" style="background: var(--green);">
+                        <div style="opacity: 0.9;">Всего заявок</div>
+                        <div style="font-size: 40px; font-weight: 800;">{{ orders.length }}</div>
+                    </div>
+                    <div class="stat-box" style="background: var(--dark);">
+                        <div style="opacity: 0.9;">Оборотка (BYN)</div>
+                        <div style="font-size: 40px; font-weight: 800;">{{ totalRevenue }}</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -88,16 +119,29 @@
     createApp({
         data() {
             return {
-                isLoggedIn: false,
-                user: null,
-                currentTab: 'services',
+                isLoggedIn: false, user: null, currentTab: 'services',
                 loginForm: { username: '', password: '' },
-                error: '',
-                services: [],
-                orders: []
+                services: [], orders: [], searchQuery: '', sortKey: 'id', sortOrder: 1
+            }
+        },
+        computed: {
+            filteredServices() {
+                let list = this.services.filter(s => s.name.toLowerCase().includes(this.searchQuery.toLowerCase()));
+                return list.sort((a, b) => (a[this.sortKey] > b[this.sortKey] ? 1 : -1) * this.sortOrder);
+            },
+            totalRevenue() {
+                const total = this.orders.reduce((sum, o) => {
+                    const val = parseFloat(o.total_price) || 0;
+                    return sum + val;
+                }, 0);
+                return total.toFixed(2);
             }
         },
         methods: {
+            formatPrice(val) {
+                const num = parseFloat(val);
+                return isNaN(num) ? '0.00' : num.toFixed(2);
+            },
             async handleLogin() {
                 const res = await fetch('/api/login', {
                     method: 'POST',
@@ -106,30 +150,27 @@
                 });
                 const data = await res.json();
                 if (data.status === 'success') {
-                    this.isLoggedIn = true;
-                    this.user = data.user;
+                    this.isLoggedIn = true; this.user = data.user;
                     this.fetchData();
-                } else {
-                    this.error = data.message;
-                }
-            },
-            logout() {
-                this.isLoggedIn = false;
-                this.user = null;
+                } else alert('Неверные данные');
             },
             async fetchData() {
-                const sRes = await fetch('/api/services');
-                this.services = await sRes.json();
-                const oRes = await fetch('/api/orders');
-                this.orders = await oRes.json();
+                const sRes = await fetch('/api/services'); this.services = await sRes.json();
+                const oRes = await fetch('/api/orders'); this.orders = await oRes.json();
             },
-            async updateService(service) {
-                alert('Функция сохранения будет в следующем шаге API!');
+            async updateService(s) {
+                await fetch(`/api/services/${s.id}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({price: s.price, difficulty_factor: s.difficulty_factor, name: s.name})
+                });
+                alert('Сохранено');
             },
-            async deleteOrder(id) {
-                await fetch(`/api/orders/${id}`, { method: 'DELETE' });
-                this.fetchData();
-            }
+            exportData() { 
+                window.location.href = '/api/export/excel'; 
+            },
+            sortBy(key) { this.sortKey = key; this.sortOrder *= -1; },
+            logout() { location.reload(); }
         }
     }).mount('#app');
 </script>

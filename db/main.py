@@ -1,12 +1,17 @@
 from fastapi import FastAPI, Depends, Body
-from sqlalchemy import create_engine, Column, Integer, String, Numeric, Text, ForeignKey, Float
+from sqlalchemy import create_engine, Column, Integer, String, Numeric, Text, ForeignKey, Float, func
 from sqlalchemy.orm import sessionmaker, Session, declarative_base, relationship, joinedload
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from io import StringIO
 import enum
 import json
 import os
+import csv
+import pandas as pd
+from fastapi.responses import Response
+from io import BytesIO
 
 DATABASE_URL = "sqlite:///./armstrim.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
@@ -177,3 +182,58 @@ def login(data: dict = Body(...), db: Session = Depends(get_db)):
             }
         }
     return {"status": "error", "message": "Неверный логин или пароль"}
+
+@app.put("/api/services/{s_id}")
+def update_service(s_id: int, data: dict = Body(...), db: Session = Depends(get_db)):
+    service = db.query(Service).filter(Service.id == s_id).first()
+    if not service:
+        return {"status": "error", "message": "Товар не найден"}
+    
+    service.price_per_unit = data.get("price", service.price_per_unit)
+    service.difficulty_factor = data.get("difficulty_factor", service.difficulty_factor)
+    service.name = data.get("name", service.name)
+    
+    db.commit()
+    return {"status": "success"}
+
+@app.get("/api/stats")
+def get_stats(db: Session = Depends(get_db)):
+    stats = db.query(func.date(Order.id), func.count(Order.id)).group_by(func.date(Order.id)).all()
+    return [{"date": str(s[0]), "count": s[1]} for s in stats]
+
+@app.get("/api/export/orders")
+def export_orders(db: Session = Depends(get_db)):
+    orders = db.query(Order).all()
+    si = StringIO()
+    cw = csv.writer(si)
+    cw.writerow(["ID", "Телефон", "Сумма", "Детали"])
+    for o in orders:
+        cw.writerow([o.id, o.client_phone, o.total_price, o.details])
+    
+    response = StreamingResponse(iter([si.getvalue()]), media_type="text/csv")
+    response.headers["Content-Disposition"] = "attachment; filename=orders_report.csv"
+    return response
+
+@app.get("/api/export/excel")
+def export_excel(db: Session = Depends(get_db)):
+    orders = db.query(Order).all()
+    
+    data = []
+    for o in orders:
+        data.append({
+            "ID": o.id,
+            "Телефон": o.client_phone,
+            "Сумма (BYN)": float(o.total_price) if o.total_price else 0,
+            "Детали": o.details
+        })
+    
+    df = pd.DataFrame(data)
+    
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Заказы')
+    
+    headers = {
+        'Content-Disposition': 'attachment; filename="orders_report.xlsx"'
+    }
+    return Response(content=output.getvalue(), media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers=headers)
