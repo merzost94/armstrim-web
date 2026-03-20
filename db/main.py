@@ -4,6 +4,8 @@ from sqlalchemy.orm import sessionmaker, Session, declarative_base, relationship
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import Column, Integer, String, Numeric, Text, ForeignKey, Float, Enum
+import enum
 import json
 import os
 
@@ -147,3 +149,48 @@ def delete_order(o_id: int, db: Session = Depends(get_db)):
     db.query(Order).filter(Order.id == o_id).delete()
     db.commit()
     return {"status": "deleted"}
+
+class UserRole(enum.Enum):
+    ADMIN = "admin"
+    MANAGER = "manager"
+    TECHNICIAN = "technician"
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    role = Column(String, default="manager") 
+
+class Service(Base):
+    __tablename__ = "services"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    price_per_unit = Column(Float)
+    unit_name = Column(String)
+    image = Column(String, default="default.jpg")
+    difficulty_factor = Column(Float, default=1.0) 
+    category_id = Column(Integer, ForeignKey("categories.id"))
+    brand_id = Column(Integer, ForeignKey("brands.id"))
+    
+    category = relationship("Category", back_populates="services")
+    brand = relationship("Brand", back_populates="services")
+    specs = relationship("ServiceSpec", back_populates="service", cascade="all, delete-orphan")
+
+    @app.post("/api/login")
+    def login(data: dict = Body(...), db: Session = Depends(get_db)):
+    username = data.get("username")
+    password = data.get("password")
+    
+    user = db.query(User).filter(User.username == username).first()
+    
+    if user and user.hashed_password == password:
+        return {
+            "status": "success", 
+            "user": {
+                "username": user.username, 
+                "role": user.role
+            }
+        }
+    
+    return {"status": "error", "message": "Неверный логин или пароль"}

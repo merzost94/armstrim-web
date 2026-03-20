@@ -1,0 +1,14 @@
+<div id="app">
+    <div v-if="!isLoggedIn" class="login-container">
+        <h2>Вход в систему управления</h2>
+        <input v-model="loginForm.username" placeholder="Логин">
+        <input v-model="loginForm.password" type="password" placeholder="Пароль">
+        <button @click="handleLogin">Войти</button>
+        <p v-if="error" style="color: red;">{{ error }}</p>
+    </div>
+
+    <div v-else class="admin-dashboard">
+        <h1>Добро пожаловать, {{ user.username }}!</h1>
+        <button @click="logout">Выйти</button>
+    </div>
+</div>
